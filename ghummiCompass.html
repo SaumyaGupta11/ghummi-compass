@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHUMMI COMPASS 🧭</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles and Tailwind config */
+        :root {
+            --primary-color: #14b8a6; /* Teal-500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate-900 for dark mode background */
+            color: #e2e8f0; /* Light text color */
+        }
+        /* Custom class for the filter tabs */
+        .filter-tab {
+            transition: all 0.2s;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            padding: 0.5rem 0.25rem;
+            white-space: nowrap;
+        }
+        .filter-tab.active {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+        /* Custom scrollbar for chat */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header Section: Updated to GHUMMI COMPASS -->
+        <header class="text-center mb-10">
+            <h1 class="4xl md:text-5xl font-extrabold text-white mb-2">GHUMMI COMPASS 🧭</h1>
+            <p class="text-lg text-slate-300">Your curated guide to the best spots for hangout, shopping and great coffee 😉</p>
+        </header>
+
+        <!-- Category Filters (Navigation) - Updated for student-centric categories -->
+        <nav id="filter-tabs" class="flex flex-wrap justify-center space-x-4 md:space-x-6 border-b border-slate-700 mb-8 p-2 overflow-x-auto">
+            <button data-category="All" class="filter-tab active text-teal-400 border-teal-400">All Places</button>
+            <button data-category="Cafe" class="filter-tab text-slate-300 hover:text-white">Cafes & Coffee</button>
+            <button data-category="Bakery" class="filter-tab text-slate-300 hover:text-white">Bakeries</button>
+            <button data-category="Hangout" class="filter-tab text-slate-300 hover:text-white">Hangouts & Food</button>
+            <button data-category="Cosmetics" class="filter-tab text-slate-300 hover:text-white">Cosmetics</button>
+        </nav>
+
+        <!-- Places Container (Cards are rendered here) -->
+        <!-- UPDATED: Now shows 3 columns (lg:grid-cols-3) on larger screens -->
+        <main id="places-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></main>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 pt-6 border-t border-slate-700 text-sm text-slate-500">
+            <p>&copy; 2024 Ghummi Compass. Student Local Guide.</p>
+        </footer>
+    </div>
+
+    <!-- CHATBOT WIDGET START -->
+    <div id="chat-widget" class="fixed bottom-6 right-6 z-50">
+        <!-- Chat Toggle Button -->
+        <button id="chat-toggle" class="w-16 h-16 bg-teal-500 hover:bg-teal-400 text-white rounded-full shadow-lg flex items-center justify-center focus:outline-none transition-transform duration-300 transform hover:scale-105">
+            <!-- Chat Icon -->
+            <svg id="chat-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z"></path>
+            </svg>
+            <!-- Close Icon (hidden by default) -->
+            <svg id="close-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <!-- Chat Container (hidden by default) -->
+        <div id="chat-container" class="hidden absolute bottom-20 right-0 w-80 h-[400px] bg-slate-800 rounded-xl shadow-2xl flex flex-col border border-slate-700 overflow-hidden transition-all duration-300">
+            <!-- Chat Header -->
+            <div class="bg-teal-600 text-white p-3 flex justify-between items-center shadow-md">
+                <span class="font-bold text-lg">Compass Bot 🤖</span>
+            </div>
+
+            <!-- Chat Messages Area -->
+            <div id="chat-messages" class="flex-grow p-3 space-y-3 overflow-y-auto custom-scrollbar">
+                <!-- Initial welcome message (added via JS below) -->
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-3 border-t border-slate-700 flex items-center">
+                <input type="text" id="chat-input" placeholder="Ask me anything..." class="flex-grow bg-slate-700 text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-slate-400 text-sm" onkeydown="if(event.key === 'Enter') document.getElementById('send-button').click()">
+                <button id="send-button" class="ml-2 bg-teal-500 hover:bg-teal-400 text-white p-2 rounded-full disabled:opacity-50 transition duration-150">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+
+             <!-- Loading Indicator (hidden by default) -->
+            <div id="loading-indicator" class="hidden absolute inset-0 bg-slate-800/80 backdrop-blur-sm flex items-center justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-400"></div>
+                <span class="ml-3 text-teal-400">Thinking...</span>
+            </div>
+        </div>
+    </div>
+    <!-- CHATBOT WIDGET END -->
+
+    <script>
+        // --- Placeholder Image URLs for New Categories ---
+        const PLACEHOLD_BAKERY = "https://placehold.co/64x64/FBBF24/ffffff?text=🍰";
+        const PLACEHOLD_COSMETICS = "https://placehold.co/64x64/8B5CF6/ffffff?text=💄";
+        
+        // --- New Mock Data (Updated with specific image URLs) ---
+        const MOCK_PLACES = [
+            // Chai Biskut Cafe now uses the specific external URL
+            { id: 1, name: "Chai Biskut Cafe", category: "Cafe", tags: ["best food", "affordable", "spacious"], rating: 4.7, distance: "0.8 mi", description: "A spacious cafe specifically designed for students, offering great tea and snacks.", imageUrl: "https://content.jdmagicbox.com/v2/comp/indore/f5/0731px731.x731.241030021348.l2f5/catalogue/chai-biskut-cafe-khajrana-indore-coffee-shops-jmxe3ms3bp-250.jpg" },
+            // Happy Oven's Bakery now uses the specific external URL
+            { id: 2, name: "Happy Oven's Bakery", category: "Bakery", tags: ["tasty", "affordable", "cakes"], rating: 4.9, distance: "1.2 mi", description: "One of the best cake shops near college with delicious treats.", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGNxLY9RVmoGT-jwGzYMbZbaNapYaxnFloow&s" },
+            // Rajwada now uses the specific external URL
+            { id: 3, name: "Rajwada", category: "Hangout", tags: ["shopping", "street-food", "networking"], rating: 4.5, distance: "0.5 mi", description: "Lively hub with diverse street food, great for quick bites or meeting friends.", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMT37s2Mjuh-ilaeYK0U6mRte2h63-l7pk6g&s" },
+            // Dev's Bakery now uses the specific external URL
+            { id: 4, name: "Dev's Bakery", category: "Bakery", tags: ["tasty", "affordable", "decorative"], rating: 4.6, distance: "2.1 mi", description: "Famous bakery with delicious cakes and also offering decorative items.", imageUrl: "https://content.jdmagicbox.com/comp/indore/h3/0731px731.x731.220810153335.a2h3/catalogue/-0atwlomvmi.jpg" },
+            // Madhuram Sandwiches uses its specific external URL
+            { id: 5, name: "Madhuram Sandwiches", category: "Cafe", tags: ["communal", "vibrant", "artisan-tea", "coffee"], rating: 4.3, distance: "0.3 mi", description: "A smaller, buzzing cafe with a focus on creative collaboration and high-quality sandwiches and coffee.", imageUrl: "https://content3.jdmagicbox.com/comp/indore/r1/0731px731.x731.150103173906.s4r1/catalogue/madhuram-sandwich-food-indore-city-indore-fast-food-hez80coktm.jpg" },
+            // Apna Sweets now uses the specific external URL
+            { id: 6, name: "Apna Sweets", category: "Hangout", tags: ["affordable", "quick-service", "sweets"], rating: 4.8, distance: "1.5 mi", description: "An excellent spot for friends chilling. Known for quick service and traditional sweets.", imageUrl: "https://content.jdmagicbox.com/comp/indore/e5/0731px731.x731.180101103317.q3e5/catalogue/apna-sweets-new-palasiya-new-palasia-indore-restaurants-1w2lh.jpg" },
+            // Beauty Mart now uses the specific external URL
+            { id: 7, name: "Beauty Mart", category: "Cosmetics", tags: ["artificial jwellery", "makeup products", "affordable"], rating: 4.7, distance: "0.6 mi", description: "A place for girls to get all the accessories, makeup products and lot more.", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSE1-698XouQw5BMwbvRVrSYNAMnGj8CKdnOg&s" },
+            // Chappan now uses the specific external URL
+            { id: 8, name: "Chappan", category: "Hangout", tags: ["food-street", "diverse-cuisine", "late-night"], rating: 4.4, distance: "1.0 mi", description: "A famous food street known for a vast variety of affordable, late-night food options.", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTwpdfWkhaLc5atKbofOgiBpcSfOy5QyZU9xQ&s" },
+        ];
+
+        const container = document.getElementById('places-container');
+        const filterTabs = document.getElementById('filter-tabs');
+
+        /**
+         * Generates the HTML card for a single place listing.
+         * @param {Object} place - The place object from MOCK_PLACES.
+         * @returns {string} The HTML string for the responsive card.
+         */
+        const createPlaceCard = (place) => {
+            // Determine color for the category tag based on new categories
+            const categoryColorMap = {
+                'Cafe': 'bg-blue-600 text-white', 
+                'Bakery': 'bg-yellow-600 text-white', 
+                // Hangout color is now slate-600
+                'Hangout': 'bg-slate-600 text-white',
+                'Cosmetics': 'bg-purple-600 text-white', 
+                'All': 'bg-slate-700 text-slate-200' 
+            };
+            // Fallback color for dark background
+            const categoryColor = categoryColorMap[place.category] || 'bg-slate-700 text-slate-200';
+
+            const starIcon = `
+                <svg class="w-4 h-4 text-yellow-400 fill-current mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.487 7.71a1 1 0 01.554-.954l6.58-.955L10 0l2.379 6.755 6.58.955a1 1 0 01.554.954l-4.26 4.175 1.123 6.545L10 15z"/>
+                </svg>
+            `;
+
+            return `
+                <div class="bg-slate-800 p-5 rounded-xl shadow-2xl transition duration-300 transform hover:shadow-teal-500/30 hover:scale-[1.01] border border-slate-700">
+                    <div class="flex items-start space-x-4">
+                        <!-- ICON/IMAGE: Uses the URL for the shop image -->
+                        <div class="w-16 h-16 rounded-lg shadow-md flex-shrink-0 bg-slate-700 overflow-hidden">
+                            <!-- Image element with object-cover to maintain aspect ratio -->
+                            <img src="${place.imageUrl}" alt="${place.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/64x64/0f172a/ffffff?text=Image+Error';"/>
+                        </div>
+
+                        <div class="flex-grow">
+                            <h2 class="text-xl font-bold text-white">${place.name}</h2>
+                            <div class="flex items-center text-sm text-slate-400 mt-0.5">
+                                ${starIcon}
+                                <span>${place.rating} · ${place.distance} away</span>
+                            </div>
+                            <!-- Category Tag -->
+                            <span class="inline-flex items-center mt-2 px-3 py-1 text-xs font-semibold rounded-full ${categoryColor}">
+                                ${place.category}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <p class="mt-4 text-slate-300 leading-relaxed">
+                        ${place.description}
+                    </p>
+
+                    <!-- Tags - Adjusted for dark mode -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        ${place.tags.map(tag => `<span class="px-2 py-0.5 text-xs font-medium text-slate-300 bg-slate-700 rounded-full">${tag.replace(/-/g, ' ')}</span>`).join('')}
+                    </div>
+
+                    <!-- Button - Uses teal primary color and now has a class/data attribute -->
+                    <button class="mt-4 w-full bg-teal-500 hover:bg-teal-400 text-white font-semibold py-2 rounded-lg transition duration-150 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 directions-button" data-place-name="${place.name}">
+                        Get Directions
+                    </button>
+                </div>
+            `;
+        };
+
+        /**
+         * Renders the places filtered by the given category.
+         * @param {string} filterCategory - The category to filter by (e.g., 'Cafe', 'All').
+         */
+        const renderPlaces = (filterCategory) => {
+            let filteredPlaces = [];
+
+            if (filterCategory === 'All') {
+                filteredPlaces = MOCK_PLACES;
+            } else {
+                 filteredPlaces = MOCK_PLACES.filter(place => place.category === filterCategory);
+            }
+
+            if (filteredPlaces.length === 0) {
+                container.innerHTML = `
+                    <div class="lg:col-span-3 md:col-span-2 text-center p-8 bg-slate-800 rounded-xl shadow-md border border-slate-700">
+                        <p class="text-xl font-semibold text-slate-200">No ${filterCategory} spots found yet! 😔</p>
+                        <p class="text-slate-400 mt-2">Try selecting 'All Places' or let us know what we missed!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Generate HTML for all filtered cards
+            const cardsHtml = filteredPlaces.map(createPlaceCard).join('');
+            container.innerHTML = cardsHtml;
+        };
+
+        /**
+         * Sets the active visual state on the filter tabs.
+         * @param {string} activeCategory - The data-category value of the active tab.
+         */
+        const setActiveTab = (activeCategory) => {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                // Remove previous active classes (now teal and white)
+                tab.classList.remove('active', 'text-teal-400', 'border-teal-400');
+                // Set inactive classes (slate and hover white)
+                tab.classList.add('text-slate-300', 'border-transparent', 'hover:text-white');
+                
+                if (tab.dataset.category === activeCategory) {
+                    // Set new active classes (teal)
+                    tab.classList.add('active', 'text-teal-400', 'border-teal-400');
+                    tab.classList.remove('text-slate-300', 'hover:text-white');
+                }
+            });
+        };
+
+        /**
+         * Handles the click event for the Get Directions button.
+         * Opens Google Maps in a new tab with the place name.
+         * @param {Event} event - The click event.
+         */
+        const handleDirectionsClick = (event) => {
+            const button = event.target.closest('.directions-button');
+            if (button) {
+                const placeName = button.dataset.placeName;
+                if (placeName) {
+                    // URL encode the place name for the query string
+                    const encodedPlaceName = encodeURIComponent(placeName);
+                    // Standard Google Maps search URL format
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedPlaceName}`;
+                    
+                    // Open the map in a new tab
+                    window.open(mapUrl, '_blank');
+                }
+            }
+        };
+
+
+        // --- Event Listeners and Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Set up tab click listeners
+            filterTabs.addEventListener('click', (event) => {
+                const target = event.target;
+                if (target.classList.contains('filter-tab')) {
+                    const category = target.dataset.category;
+                    setActiveTab(category);
+                    renderPlaces(category);
+                }
+            });
+
+            // 2. Add a general click listener to the entire container to handle dynamically created buttons
+            container.addEventListener('click', handleDirectionsClick);
+
+            // 3. Initial render
+            renderPlaces('All');
+            // 'All' is already set as active in the HTML, but this ensures consistency
+            setActiveTab('All'); 
+        });
+
+        // =====================================
+        //          CHATBOT LOGIC START
+        // =====================================
+        
+        // API Configuration
+        const API_KEY = ""; // Placeholder for Canvas environment
+        const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+        
+        const SYSTEM_INSTRUCTION = "You are the Compass Bot, a friendly, witty, and knowledgeable student guide for the city of Indore, India. Your purpose is to help students find the best local spots. Keep your answers concise, engaging, and focus on student interests (food, hangouts, affordability). Use the provided search tool to find up-to-date information when necessary, especially for external or real-time queries. Always cite any sources you use.";
+
+        // Chat State and Elements
+        let chatHistory = [];
+        let isLoading = false;
+
+        const chatContainer = document.getElementById('chat-container');
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const chatIcon = document.getElementById('chat-icon');
+        const closeIcon = document.getElementById('close-icon');
+
+        /**
+         * Toggles the visibility of the chat window.
+         */
+        const toggleChat = () => {
+            const isHidden = chatContainer.classList.toggle('hidden');
+            if (isHidden) {
+                chatIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            } else {
+                chatIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+                chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom on open
+                chatInput.focus();
+            }
+        };
+
+        /**
+         * Appends a message to the chat display area.
+         * @param {string} text - The message content.
+         * @param {string} sender - 'user' or 'bot'.
+         * @param {Array<Object>} [sources=[]] - Optional array of source objects.
+         */
+        const displayMessage = (text, sender, sources = []) => {
+            const messageWrapper = document.createElement('div');
+            const messageBubble = document.createElement('div');
+            
+            const isUser = sender === 'user';
+            
+            messageWrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            
+            messageBubble.className = `text-sm p-3 rounded-xl max-w-[80%] shadow-lg`;
+            messageBubble.classList.add(isUser ? 'bg-teal-500 text-white rounded-br-none' : 'bg-slate-700 text-white rounded-tl-none');
+            
+            // Convert Markdown links (if any)
+            let formattedText = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, title, url) => {
+                return `<a href="${url}" target="_blank" class="text-teal-300 hover:text-teal-100 underline">${title}</a>`;
+            });
+
+            messageBubble.innerHTML = `<p>${formattedText}</p>`;
+
+            if (sources.length > 0) {
+                const sourcesHtml = sources.map((source, index) => 
+                    `<a href="${source.uri}" target="_blank" class="text-xs text-teal-300 hover:text-teal-100 block truncate" title="${source.title || source.uri}">[${index + 1}] ${source.title || new URL(source.uri).hostname}</a>`
+                ).join('');
+                messageBubble.innerHTML += `<div class="mt-2 pt-2 border-t border-slate-600 space-y-1">${sourcesHtml}</div>`;
+            }
+
+            messageWrapper.appendChild(messageBubble);
+            chatMessages.appendChild(messageWrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto scroll to the latest message
+        };
+
+        /**
+         * Sets the loading state of the chat interface.
+         * @param {boolean} loading - True to show loading, false to hide.
+         */
+        const setLoading = (loading) => {
+            isLoading = loading;
+            loadingIndicator.classList.toggle('hidden', !loading);
+            sendButton.disabled = loading;
+            chatInput.disabled = loading;
+        };
+
+
+        /**
+         * Calls the Gemini API with the given chat history and user query.
+         * Implements exponential backoff for resilience.
+         * @param {string} query - The user's latest query.
+         * @returns {Promise<Object>} The API response object containing text and sources.
+         */
+        const callGeminiAPI = async (query) => {
+            const maxRetries = 3;
+            const initialDelayMs = 1000;
+            
+            // Construct the contents array from chatHistory, omitting the first (initial welcome) message
+            const contents = chatHistory.slice(1).map(msg => ({
+                role: msg.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+            }));
+
+            const payload = {
+                contents: contents, // Use the full history for context
+                tools: [{ "google_search": {} }], // Enable Google Search grounding
+                config: {
+                    systemInstruction: SYSTEM_INSTRUCTION 
+                }
+            };
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const text = candidate.content.parts[0].text;
+                        
+                        // Extract grounding sources
+                        let sources = [];
+                        const groundingMetadata = candidate.groundingMetadata;
+                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                            sources = groundingMetadata.groundingAttributions
+                                .map(attribution => ({
+                                    uri: attribution.web?.uri,
+                                    title: attribution.web?.title,
+                                }))
+                                .filter(source => source.uri && source.title); // Ensure sources are valid
+                        }
+                        
+                        return { text, sources };
+
+                    } else {
+                        return { text: "I'm sorry, I couldn't generate a coherent response. Can you try asking differently?", sources: [] };
+                    }
+
+                } catch (error) {
+                    console.error(`Attempt ${attempt + 1} failed:`, error);
+                    if (attempt < maxRetries - 1) {
+                        const delay = initialDelayMs * Math.pow(2, attempt) + Math.random() * 500;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        throw new Error("Failed to communicate with the Compass Bot API after multiple retries.");
+                    }
+                }
+            }
+        };
+
+
+        /**
+         * Handles sending a message from the user.
+         */
+        const sendMessage = async () => {
+            const userQuery = chatInput.value.trim();
+            if (!userQuery || isLoading) return;
+
+            // 1. Display user message and update history
+            chatHistory.push({ sender: 'user', text: userQuery });
+            displayMessage(userQuery, 'user');
+            chatInput.value = '';
+            
+            setLoading(true);
+
+            try {
+                // 2. Call the Gemini API
+                const { text: botResponseText, sources: botSources } = await callGeminiAPI(userQuery);
+                
+                // 3. Display bot response and update history
+                chatHistory.push({ sender: 'bot', text: botResponseText, sources: botSources });
+                displayMessage(botResponseText, 'bot', botSources);
+
+            } catch (error) {
+                // 4. Handle failure and display error message
+                const errorMsg = error.message || "An unknown error occurred while contacting the bot. Please check your connection.";
+                chatHistory.push({ sender: 'bot', text: errorMsg, isError: true });
+                displayMessage(`**Error:** ${errorMsg}`, 'bot');
+                console.error(error);
+            } finally {
+                // 5. Hide loading indicator
+                setLoading(false);
+            }
+        };
+
+        // Add initial welcome message to history and display it
+        const initialBotMessage = "Hey there! I'm the Compass Bot, your guide to student life in Indore. Ask me about the best spots, food, or anything else!";
+        chatHistory.push({ 
+            sender: 'bot', 
+            text: initialBotMessage 
+        });
+        // Wait for DOMContentLoaded to ensure chatMessages element exists before displaying
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if the chat has already been populated by other logic (which it won't be here, but good practice)
+            if (chatMessages.children.length === 0) {
+                 displayMessage(initialBotMessage, 'bot');
+            }
+        });
+
+
+        // --- Chatbot Event Listeners ---
+        chatToggle.addEventListener('click', toggleChat);
+        sendButton.addEventListener('click', sendMessage);
+        
+        // =====================================
+        //          CHATBOT LOGIC END
+        // =====================================
+    </script>
+</body>
+</html>
